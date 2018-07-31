@@ -1,6 +1,7 @@
 #loading libraries
 library(tidyverse)
 library(ISLR)
+library(car)
 
 #Problem 8
 attach(Auto)
@@ -24,6 +25,13 @@ linear_fit_2 = lm(mpg~.-name, data=Auto)
 summary(linear_fit_2)
 par(mfrow=c(2,2))
 plot(linear_fit_2)
+
+  #Use the Variance Inflation Factor to identify factors that are collinear i.e. factors with VIF > 5
+  var_inf_factors = vif(linear_fit_2)
+  col_factors = names(var_inf_factors[var_inf_factors[]>5])
+  col_factors
+  # The factors that are collinear and therefore likely to have either an interaction term or a power term are "cylinders" "displacement" "horsepower" "weight"
+  
 linear_fit_3 = lm(mpg~.-name+cylinders:horsepower, data=Auto)
 summary(linear_fit_3)
 linear_fit_4 = lm(mpg~.-name+cylinders:horsepower+I(weight^2), data=Auto)
