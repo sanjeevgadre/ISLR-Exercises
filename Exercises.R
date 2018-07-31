@@ -87,3 +87,43 @@ summary(linear_fit_9_a)
 #<a> The coefficient estimate Beta-hat is 1.99 and the associated t-statistic value is 18.73 and p-value is less than 2e-16. We can reject the null hypothesis that Beta-hat is 0 or that y is not related to x.
 #<b> The coefficient estimate os 0.39, standard error in coefficient estimate is 0.021, the associated t value statistic is 18.73 and p-value is less than 2e-16. 
 #<f> Shown by the summaries of linear_fit_8_a and linear_fit_9_a
+
+#Problem 13
+set.seed(1)
+x = rnorm(100)
+eps= rnorm(100,0,sqrt(0.25))
+y = -1+0.5*x+eps
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+
+linear_fit_13e = lm(y~x)
+summary_13e = summary(linear_fit_13e)
+beta_0_hat_13e = summary_13e$coefficients[1]; beta_1_hat_13e = summary_13e$coefficients[2]; R_sq_13e = summary_13e$r.squared
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_1_hat_13e, intercept=beta_0_hat_13e, col="Red", show.legend=TRUE)
+
+linear_fit_13g = lm(y~x+I(x^2))
+summary_13g = summary(linear_fit_13g)
+R_sq_13g = summary_13g$r.squared
+
+eps_less = rnorm(100,0,sqrt(0.025))
+y = -1+0.5*x+eps_less
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+
+linear_fit_13h = lm(y~x)
+summary_13h = summary(linear_fit_13h)
+beta_0_hat_13h = summary_13h$coefficients[1]; beta_1_hat_13h = summary_13h$coefficients[2]; R_sq_13h = summary_13h$r.squared
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_1_hat_13h, intercept=beta_0_hat_13h, col="Red", show.legend=TRUE)
+
+eps_more = rnorm(100,0,sqrt(2.5))
+y = -1+0.5*x+eps_more
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+
+linear_fit_13i = lm(y~x)
+summary_13i = summary(linear_fit_13i)
+beta_0_hat_13i = summary_13i$coefficients[1]; beta_1_hat_13i = summary_13i$coefficients[2]; R_sq_13i = summary_13i$r.squared
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_1_hat_13i, intercept=beta_0_hat_13i, col="Red", show.legend=TRUE)
