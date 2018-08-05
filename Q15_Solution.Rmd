@@ -1,0 +1,169 @@
+---
+title: "Chap3: Exercises - Q15"
+author: "Sanjeev Gadre"
+date: "August 5, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Including the necessary libraries
+
+```{r including-libraries, message=FALSE, echo=TRUE}
+library(ISLR)
+library(car)
+library(tidyverse)
+library(MASS)
+attach(Boston)
+```
+
+## Problem 15
+
+#15.a
+```{r 15-a-i, echo=TRUE}
+linear_fit_zn = lm(crim~zn, data=Boston)
+summary_zn = summary(linear_fit_zn)
+
+linear_fit_indus = lm(crim~indus, data=Boston)
+summary_indus = summary(linear_fit_indus)
+
+linear_fit_chas = lm(crim~chas, data=Boston)
+summary_chas = summary(linear_fit_chas)
+
+linear_fit_nox = lm(crim~nox, data=Boston)
+summary_nox = summary(linear_fit_nox)
+
+linear_fit_rm = lm(crim~rm, data=Boston)
+summary_rm = summary(linear_fit_rm)
+
+linear_fit_age = lm(crim~age, data=Boston)
+summary_age = summary(linear_fit_age)
+
+linear_fit_dis = lm(crim~dis, data=Boston)
+summary_dis = summary(linear_fit_dis)
+
+linear_fit_rad = lm(crim~rad, data=Boston)
+summary_rad = summary(linear_fit_rad)
+
+linear_fit_tax = lm(crim~tax, data=Boston)
+summary_tax = summary(linear_fit_tax)
+
+linear_fit_ptratio = lm(crim~ptratio, data=Boston)
+summary_ptratio = summary(linear_fit_ptratio)
+
+linear_fit_black = lm(crim~black, data=Boston)
+summary_black = summary(linear_fit_black)
+
+linear_fit_lstat = lm(crim~lstat, data=Boston)
+summary_lstat = summary(linear_fit_lstat)
+
+linear_fit_medv = lm(crim~medv, data=Boston)
+summary_medv = summary(linear_fit_medv)
+
+row_names = names(Boston)[2:14]
+summary_df = data.frame(R_sq = c(summary_zn$r.squared, summary_indus$r.squared, summary_chas$r.squared, summary_nox$r.squared, summary_rm$r.squared, summary_age$r.squared, summary_dis$r.squared, summary_rad$r.squared, summary_tax$r.squared, summary_ptratio$r.squared, summary_black$r.squared, summary_lstat$r.squared, summary_medv$r.squared), P_value = c(summary_zn$coefficients[2,4], summary_indus$coefficients[2,4], summary_chas$coefficients[2,4], summary_nox$coefficients[2,4], summary_rm$coefficients[2,4], summary_age$coefficients[2,4], summary_dis$coefficients[2,4], summary_rad$coefficients[2,4], summary_tax$coefficients[2,4], summary_ptratio$coefficients[2,4], summary_black$coefficients[2,4], summary_lstat$coefficients[2,4], summary_medv$coefficients[2,4]), coefficients = c(summary_zn$coefficients[2,1], summary_indus$coefficients[2,1], summary_chas$coefficients[2,1], summary_nox$coefficients[2,1], summary_rm$coefficients[2,1], summary_age$coefficients[2,1], summary_dis$coefficients[2,1], summary_rad$coefficients[2,1], summary_tax$coefficients[2,1], summary_ptratio$coefficients[2,1], summary_black$coefficients[2,1], summary_lstat$coefficients[2,1], summary_medv$coefficients[2,1]), row.names = row_names)
+summary_df
+```
+
+From the table above it is clear that based on the p-values of individual predictors, all predictors seem to have an impact on the crime rate. If we are to use the R-squared values, then "rad", "tax" & "lstat", in that order, "explain" the crime rate. Additionally, "indus", "nox", "dis", "medv", "lstat" and "black" probably have a significant correlation to the crime rate.
+
+```{r 15-a-ii, echo=FALSE}
+par(mfrow=c(2,3))
+plot(rad, crim)
+plot(tax, crim)
+plot(lstat, crim)
+plot(medv, crim)
+```
+
+#15.b
+```{r 15-b, echo=TRUE}
+linear_fit_all = lm(crim~., data=Boston)
+summary_fit_all = summary(linear_fit_all)
+summary_fit_all
+```
+
+The summary results indicate that the predictors "dis" and "rad" have siginificant association to the response, followed by "medv". There might be some association for "zn", "nox", "lstat" and "black" to the response. For these 7 predictors I would reject the null hypothesis beta-j=0. 
+
+Running the multivariate linear regression again but removing the predictors with no association to the response gives:
+```{r 15-b-ii, echo=TRUE}
+linear_fit_all_2 = lm(crim~.-indus-chas-rm-age-tax-ptratio, data=Boston)
+summary_fit_all_2 = summary(linear_fit_all_2)
+summary_fit_all_2
+
+```
+The summary indicate that "lstat" is the predictor with least significance (p-value ~ 0.1). We therefore decided to check if the second order of "lstat" has a correleation to the response
+
+```{r 15-b-iii, echo=TRUE}
+linear_fit_all_3 = update(linear_fit_all_2, ~.+I(lstat^2))
+summary_fit_all_3 = summary(linear_fit_all_3)
+summary_fit_all_3
+```
+
+The summary statistics indicates that "lstat"'s second order has a significant association with the response.
+
+#15.c
+Comparing results of 15.a and 15.b by plotting coefficients of individual predictors
+```{r 15-c-i, echo=TRUE}
+comparison_df = data.frame(univar_coeff = summary_df$coefficients, multivar_coeff = summary_fit_all$coefficients[2:14], row.names = row_names)
+comparison_df
+
+comparison_df %>% ggplot(aes(univar_coeff, multivar_coeff, col=row_names))+ geom_point(position="jitter")+ geom_text(aes(label=row_names))
+```
+
+#15.d
+```{r 15-d, echo=TRUE}
+linear_fit_zn_a = lm(crim~poly(zn,3), data=Boston)
+summary_zn_a = summary(linear_fit_zn_a)
+
+linear_fit_indus_a = lm(crim~poly(indus,3), data=Boston)
+summary_indus_a = summary(linear_fit_indus_a)
+
+linear_fit_chas_a = lm(crim~poly(chas,1), data=Boston)
+summary_chas_a = summary(linear_fit_chas_a)
+
+linear_fit_nox_a = lm(crim~poly(nox,3), data=Boston)
+summary_nox_a = summary(linear_fit_nox_a)
+
+linear_fit_rm_a = lm(crim~poly(rm,3), data=Boston)
+summary_rm_a = summary(linear_fit_rm_a)
+
+linear_fit_age_a = lm(crim~poly(age,3), data=Boston)
+summary_age_a = summary(linear_fit_age_a)
+
+linear_fit_dis_a = lm(crim~poly(dis,3), data=Boston)
+summary_dis_a = summary(linear_fit_dis_a)
+
+linear_fit_rad_a = lm(crim~poly(rad,3), data=Boston)
+summary_rad_a = summary(linear_fit_rad_a)
+
+linear_fit_tax_a = lm(crim~poly(tax,3), data=Boston)
+summary_tax_a = summary(linear_fit_tax_a)
+
+linear_fit_ptratio_a = lm(crim~poly(ptratio,3), data=Boston)
+summary_ptratio_a = summary(linear_fit_ptratio_a)
+
+linear_fit_black_a = lm(crim~poly(black,3), data=Boston)
+summary_black_a = summary(linear_fit_black_a)
+
+linear_fit_lstat_a = lm(crim~poly(lstat,3), data=Boston)
+summary_lstat_a = summary(linear_fit_lstat_a)
+
+linear_fit_medv_a = lm(crim~poly(medv,3), data=Boston)
+summary_medv_a = summary(linear_fit_medv_a)
+
+compare_df = summary_df
+compare_df$coefficients=NULL
+compare_df$P_value=NULL
+
+
+compare_df=setNames(compare_df, c("LA_Rsq"))
+compare_df$NLA_Rsq = c(summary_zn_a$r.squared, summary_indus_a$r.squared, summary_chas_a$r.squared, summary_nox_a$r.squared, summary_rm_a$r.squared, summary_age_a$r.squared, summary_dis_a$r.squared, summary_rad_a$r.squared, summary_tax_a$r.squared, summary_ptratio_a$r.squared, summary_black_a$r.squared, summary_lstat_a$r.squared, summary_medv_a$r.squared)
+
+compare_df = compare_df %>% mutate(Rsq_improvement=(NLA_Rsq/LA_Rsq-1)*100)
+compare_df = data.frame(compare_df, row.names=row_names)
+compare_df
+
+```
+
+For a number of factors, the R-squared value shows significant improvement when non-linear terms are used and therefore might provide evidence of non-linear association between the predictor and response. However, one needs to be careful that this "association" does not in reality describe an over-fitted model and also remember that each predictor is being used independantly of others and may therefore display an association that may not exist in a multivariate linear regression model.
