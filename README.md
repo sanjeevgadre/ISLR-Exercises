@@ -1,1 +1,1 @@
-#ISLR Chap3 Exercises
+Solitions to Practical Exercises from Chapter 3 of ISLR 
