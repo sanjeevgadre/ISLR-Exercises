@@ -2,7 +2,7 @@
 title: "Q10-Solution"
 author: "Sanjeev Gadre"
 date: "August 22, 2018"
-output: html_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
@@ -29,9 +29,10 @@ cor(Weekly[,-9])
 Weekly %>% ggplot(aes(Year,Volume, group=Year))+geom_boxplot()
 ```
 
-The only meaniful correlation is between Year and Volume. The boxplots reveal that <a> the trading volume has increased over years, and <b> so has the weekly variations in the volume in the given year.
+The only meaniful correlation is between Year and Volume. The boxplots reveal that <1> the trading volume has increased over years, and <2> so has the weekly variations in the volume in the given year.
 
 #10-b
+
 ```{r 10-b, echo=TRUE}
 glm_fit = glm(Direction~.-Year-Today, data=Weekly, family=binomial)
 summary(glm_fit)
@@ -40,6 +41,7 @@ summary(glm_fit)
 Lag2 is the only predictor that appears statistically significant
 
 #10-c
+
 ```{r 10-c, echo=TRUE}
 glm_probs = predict(glm_fit, data=Weekly, type="response")
 glm_pred = rep("Down", 1089)
@@ -54,49 +56,49 @@ The confusion matrix shows that the logistic predictor overwhelmingly predicts "
 
 #10-d
 ```{r 10-d, echo=TRUE}
-train = Weekly$Year%in%1990:2008
+train_set = Weekly%>%filter(Year%in%1990:2008)
+test_set = Weekly%>%filter(Year%in%2009:2010)
 
-Test_Set=Weekly[!train,]
-Test_Set_Direction = Weekly$Direction[!train]
+glm_fit_1 = glm(Direction~Lag2, data=train_set, family=binomial)
+glm_probs_1 = predict(glm_fit_1, newdata=test_set, type="response")
+glm_pred_1 = rep("Down", nrow(test_set))
+glm_pred_1[glm_probs_1>0.5] = "Up"
 
-glm_fit_1 = glm(Direction~Lag2, data=Weekly, family=binomial, subset=train)
-glm_probs_1 = predict(glm_fit_1, Test_Set, type="response")
-glm_pred_1 = rep("Down", nrow(Test_Set))
-glm_pred_1[glm_probs_1>0.5]="Up"
-
-table(glm_pred_1, Test_Set_Direction)
-mean(glm_pred_1==Test_Set_Direction)
+table(Prediction=glm_pred_1, Actual=test_set$Direction)
+mean(glm_pred_1==test_set$Direction)
 ```
 
 #10-e
 ```{r 10-e, echo=TRUE}
-lda_fit = lda(Direction~Lag2, data=Weekly, subset=train)
-lda_pred = predict(lda_fit, Test_Set)
-table(lda_pred$class, Test_Set_Direction)
-mean(lda_pred$class==Test_Set_Direction)
-
+lda_fit = lda(Direction~Lag2, data=train_set)
+lda_pred = predict(lda_fit, newdata=test_set)
+table(Prediction=lda_pred$class, Actual=test_set$Direction)
+mean(lda_pred$class==test_set$Direction)
 ```
 
 #10-f
 ```{r 10-f, echo=TRUE}
-qda_fit = qda(Direction~Lag2, data=Weekly, subset=train)
-qda_pred = predict(qda_fit, Test_Set)
-table(qda_pred$class, Test_Set_Direction)
-mean(qda_pred$class==Test_Set_Direction)
+qda_fit = qda(Direction~Lag2, data=train_set)
+qda_pred = predict(qda_fit, newdata=test_set)
+table(Prediction=qda_pred$class, Actual=test_set$Direction)
+mean(qda_pred$class==test_set$Direction)
 
 ```
 
 #10-g
+
 ```{r 10-g, echo=TRUE}
-train_data = as.matrix(Weekly$Lag2[train])
-test_data = as.matrix(Weekly$Lag2[!train])
-train_direction = Weekly$Direction[train]
+train_data = as.matrix(train_set$Lag2)
+test_data = as.matrix(test_set$Lag2)
+train_direction = train_set$Direction
 
 set.seed(1)
 knn_pred=knn(train_data,test_data,train_direction,k=1)
 
-table(knn_pred, Test_Set_Direction)
-mean(knn_pred==Test_Set_Direction)
+table(Prediction=knn_pred, Actual=test_set$Direction)
+mean(knn_pred==test_set$Direction)
 ```
 
-#Dummy txt. Delete
+#10-h
+
+The logistic regression and the LDA methods both provide an accurate prediction 62.5% of the times and is the best of all the methods.
