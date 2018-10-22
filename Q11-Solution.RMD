@@ -1,0 +1,141 @@
+---
+title: "Question 11 - Solutions"
+author: "Sanjeev Gadre"
+date: "October 21, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaps)
+library(glmnet)
+library(pls)
+library(dplyr)
+library(MASS)
+
+data("Boston")
+```
+
+###Functions - Aggregating the various functions required for analysis
+```{r functions, include=FALSE, message=FALSE}
+#Function for k-fold cross-validated MSE for PCR
+mse.pred.pcr.folds = function(i, m){
+  pcr.fit = pcr(crim~., data = Boston[fold!=i,], scale = TRUE, validation = "CV")
+  pred.pcr = predict(pcr.fit, newdata = Boston[fold==i,], ncomp = m)
+  mse.pred.fold[i] = (pred.pcr-Boston$crim[fold==i])^2 %>% mean()
+  return(mse.pred.fold[i])
+}
+
+#Function for k-fold cross-validated MSE for Ridge & Lasso fit
+mse.pred.glmnet.folds = function(i, a){
+  glmnet.fit = glmnet(x.matrix[fold!=i,], y[fold!=i], alpha = a)
+  best.lambda = cv.glmnet(x.matrix[fold!=i,], y[fold!=i], alpha = a) %>% .$lambda.min
+  pred.glmnet = predict(glmnet.fit, newx = x.matrix[fold==i,], s = best.lambda)
+  mse.pred.fold[i] = (pred.glmnet-y[fold==i])^2 %>% mean()
+  return(mse.pred.fold[i])
+}
+
+#Function for predict() functionality for Best Subset selection
+predict.regsubsets = function(object, newdata, id, ...){
+  form = as.formula(object$call[[2]])
+  mat = model.matrix(form, newdata)
+  coefi = coef(object, id=id)
+  xvars = names(coefi)
+  mat[,xvars]%*%coefi
+}
+
+#Function for k-fold cross validated MSE for LSE
+mse.pred.lse.folds = function(i){
+  lse.fit = lm(crim~., data = Boston[fold!=i,])
+  pred.lse = predict(lse.fit, newdata = Boston[fold==i,], type = "response", interval = "prediction")
+  mse.pred.fold[i] = (pred.lse-Boston$crim[fold==i])^2 %>% mean()
+}
+```
+
+##11.a.i PCR and LSE model
+```{r 11-a-i}
+#Splitting data into a folds
+no.of.preds = ncol(Boston)-1
+no.of.folds = 5
+set.seed(27)
+fold = sample(1:no.of.folds, nrow(Boston), replace = TRUE)
+mse.pred.fold = rep(0, no.of.folds)
+
+#PCR MODEL
+#Determine the optimal value of M
+pcr.fit = pcr(crim~., data = Boston[fold!=1,], scale = TRUE, validation = "CV")
+validationplot(pcr.fit, val.type = "MSEP")
+
+#Based on the validation plot we proceed with further PCR investigation using M=8
+M=8
+
+mse.pred.pcr = mapply(mse.pred.pcr.folds, i=1:no.of.folds, m=M) %>% mean()
+
+#LSE MODEL
+mse.pred.lse = sapply(1:no.of.folds, mse.pred.lse.folds) %>% mean()
+```
+
+###11.a.ii Ridge and Lasso models
+```{r 11-a-ii}
+x.matrix = model.matrix(crim~., data = Boston)[,-1]
+y = Boston$crim
+
+#RIDGE MODEL
+mse.pred.ridge = mapply(mse.pred.glmnet.folds, i=1:no.of.folds, a=0) %>% mean()
+
+#LASSO MODEL
+mse.pred.lasso = mapply(mse.pred.glmnet.folds, i=1:no.of.folds, a=1) %>% mean()
+```
+
+###11.a.iii Best subset selection model
+```{r 11-a-iii}
+cv.errors = matrix(NA, no.of.folds, no.of.preds)
+
+for (i in 1:no.of.folds){
+  best.fit.regsubset = regsubsets(crim~., data = Boston[fold!=i,], nvmax = no.of.preds)
+  for (j in 1:no.of.preds){
+    pred.regsubset = predict(best.fit.regsubset, newdata = Boston[fold==i,], id = j)
+    cv.errors[i,j] = (pred.regsubset - Boston$crim[fold==i])^2 %>% mean()
+  }
+}
+
+mean.cv.errors = apply(cv.errors,2,mean)
+plot(mean.cv.errors, type = "b")
+
+#BEST SUBSET SELECTION MODEL
+mse.pred.regsubset = min(mean.cv.errors)
+```
+
+###11.a.iv Compare and contrast
+```{r 11-a-iv}
+matrix(data = c("LSE", "Best Subset", "Ridge", "Lasso", "PCR", mse.pred.lse, mse.pred.regsubset, mse.pred.ridge, mse.pred.lasso, mse.pred.pcr), ncol = 2, dimnames = list(NULL, c("Model Type", "k-fold cross validated Test MSE")))
+```
+
+All four models show significant improvement in the Test MSE over the baseline least square model. However there is not much to choose between these four models based on the Test MSE with the "Best Subset" model performing the best.
+
+Our recommendation is that we choose "Best Subset" and "Lasso" model for further investigation as they have the potential to provide the most inferencable model in so far as the predictors that have high impact on the response variable.
+
+###11.b.i Investigating the Best Subset model
+```{r 11-b-i}
+#Investigation above reveals that the Best Subset model provides the lowest MSE for the set that includes 10 predictors. We now fit the Best Subset model to the entire data and then identify the 10 predictors that are inculded in the model together with their coefficients.
+
+reg.fit.full = regsubsets(crim~., data = Boston, nvmax = no.of.preds)
+reg.fit.coeff = coef(reg.fit.full, 10)
+reg.fit.coeff
+```
+
+###11.b.ii Investigating the Lasso model
+```{r 11-b-ii}
+#We will first establish the best lambda for the entire data and then use that lambda to identify the predictors that are included in the model together with their coefficients
+
+lasso.fit.full = glmnet(x.matrix, y, alpha = 1)
+best.lambda = (cv.glmnet(x.matrix, y, alpha = 1))$lambda.min
+lasso.fit.coef = predict(lasso.fit.full, type = "coefficients", s = best.lambda)[1:no.of.preds,]
+lasso.fit.coef
+```
+
+The Lasso model includes 12 predictors where as the Best subset model includes 10. Given that the Best Subset model outperforms Lasso in terms of the Test MSE and includes lesser number of predictors (therefore more interpretable), we recommend the use of the Best Subset model. Furthermore, since the number of predictors is small the computational overhead of the Best Subset model isn't a limitation.
+
+###11.c
+The Best Subset model chosen excludes 3 predictors - "chas", "age", "tax" - from the final model. It is probably because these 3 predictors are subsumed in one or more of the other 10 predictors.
+
