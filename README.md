@@ -14,3 +14,6 @@ Here we have used the cv.glm() from library(boot) to estimate the cross fold val
 
 ###Question - 10
 Two step model building process: stepwise subset selection method to choose the optimal number of predictors to include in the final model. More importantly, we applied the 1-standard-deviation rule to select the smallest possible subset. In the second step we build a GAM to include possible non-linear relationships between the predictors and the response variable.
+
+###Question - 11
+Highlights how backfitting can be used to fit a gam to a given dataset.

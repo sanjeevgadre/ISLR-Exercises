@@ -1,0 +1,77 @@
+---
+title: "Q11-Solution"
+author: "Sanjeev Gadre"
+date: "November 13, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+library(dplyr)
+library(leaps)  #used for the regsubset()
+library(gam)    #for gam()
+library(ggplot2)
+```
+
+###Functions used in solutions below
+```{r functions}
+
+```
+
+###11.a
+```{r 11-a}
+set.seed(1)
+y = rnorm(100)*3
+x.1 = rnorm(100)*5
+x.2 = rnorm(100)*7
+```
+
+###11.b
+```{r 11-b}
+beta.1 = 5
+```
+
+###11.c
+```{r 11-c}
+a = y-beta.1*x.1
+beta.2 = lm(a~x.2)$coef[2]
+```
+
+###11.d
+```{r 11.d}
+a = y-beta.2*x.2
+beta.1 = lm(a~x.1)$coef[2]
+beta.0 = lm(a~x.1)$coef[1]
+```
+
+###11.e
+```{r 11.e}
+beta.estimates = data.frame(beta.0 = c(beta.0, rep(0,99)), beta.1 = c(beta.1, rep(0,99)), beta.2 = c(beta.2, rep(0,99)))
+
+for (i in 2:100){
+    a = y-beta.1*x.1
+  beta.2 = lm(a~x.2)$coef[2]
+  a = y-beta.2*x.2
+  beta.1 = lm(a~x.1)$coef[2]
+  beta.0 = lm(a~x.1)$coef[1]
+  beta.estimates[i,] = c(beta.0 = beta.0, beta.1 = beta.1, beta.2 = beta.2)
+}
+
+beta.estimates
+
+beta.estimates %>% ggplot(aes(seq(1:100), beta.0))+ geom_line(col = "red")+ 
+  geom_line(aes(seq(1:100), beta.1), col = "blue")+
+  geom_line(aes(seq(1:100), beta.2), col = "green")+ xlab("Iteration number")+ ylab("beta.0/beta.1/beta.2")
+```
+
+###11.f
+```{r}
+lm.fit = lm(y~x.1+x.2)
+beta.0.lm = coef(lm.fit)[1]
+beta.1.lm = coef(lm.fit)[2]
+beta.2.lm = coef(lm.fit)[3]
+```
+
+###11.e
+It took just 3 iterations for the backfitting to obtain a "good" approximation to the multiple regression coefficients.
