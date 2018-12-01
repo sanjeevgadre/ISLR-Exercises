@@ -1,3 +1,13 @@
+    knitr::opts_chunk$set(echo = TRUE)
+    library(dplyr)
+    library(tree)
+    library(randomForest)
+    library(ISLR)
+    library(ggplot2)
+
+
+    data(Carseats)
+
 ### 8.a
 
     set.seed(1)

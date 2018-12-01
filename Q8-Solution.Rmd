@@ -5,7 +5,7 @@ date: "November 30, 2018"
 output: md_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(tree)

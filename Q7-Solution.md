@@ -1,3 +1,14 @@
+    knitr::opts_chunk$set(echo = TRUE)
+    library(dplyr)
+    library(randomForest)
+    library(MASS)
+    library(ggplot2)
+    library(reshape2)
+
+    data(Boston)
+
+### 7.a
+
 1.  We first split the Boston database into a training set and test set.
 2.  We then created a series of options for the "mtry" and "ntree"
     variables.
@@ -14,7 +25,7 @@
     mtry.opt = seq(5, 13, 2)
     ntree.opt = seq(1, 500, 10)
 
-    test.error = matrix(data = rep(0, length(ntree.opt)*length(mtry.opt)), nrow = length(ntree.opt), ncol = length(mtry.opt)) %>% `colnames<-`(as.character(mtry.opt))
+    test.error = matrix(data = rep(0, length(ntree.opt)*length(mtry.opt)), nrow = length(ntree.opt), ncol = length(mtry.opt))
 
     for(j in 1:ncol(test.error)){
       for(i in 1:nrow(test.error)){
@@ -23,6 +34,8 @@
         test.error[i,j] = (y.hat-Boston[-train, "medv"])^2 %>% mean()
       }
     }
+
+### 7.b
 
     test.error %>% data.frame() %>% `colnames<-`(as.character(mtry.opt)) %>% 
       cbind(no.of.trees = ntree.opt,.) %>% 

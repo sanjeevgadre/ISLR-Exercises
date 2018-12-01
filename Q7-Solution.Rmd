@@ -5,7 +5,7 @@ date: "November 29, 2018"
 output: md_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(randomForest)
@@ -15,6 +15,8 @@ library(reshape2)
 
 data(Boston)
 ```
+
+###7.a
 
 1. We first split the Boston database into a training set and test set.
 2. We then created a series of options for the "mtry" and "ntree" variables.
@@ -38,6 +40,7 @@ for(j in 1:ncol(test.error)){
 }
 ```
 
+###7.b
 ```{r 7-b}
 test.error %>% data.frame() %>% `colnames<-`(as.character(mtry.opt)) %>% 
   cbind(no.of.trees = ntree.opt,.) %>% 
