@@ -1,0 +1,110 @@
+---
+title: "Q9-Solution"
+author: "Sanjeev Gadre"
+date: "November 30, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tree)
+library(ISLR)
+library(ggplot2)
+
+data(OJ)
+```
+
+###9.a
+```{r 9-a}
+set.seed(1970)
+train = sample(1:nrow(OJ), 800, replace = FALSE)
+```
+
+###9.b
+```{r 9-b}
+tree.purchase = tree(Purchase~., data = OJ, subset = train)
+summary(tree.purchase)
+```
+
+The tree has 8 terminal nodes and a misclassification error rate of 16.25%
+
+###9.c
+```{r 9-c}
+tree.purchase
+```
+
+The first split in the tree is governed by whether the "Customer brand loyalty for CH" (LoyalCH) is less than 0.5036. There are 357 observations that answer Yes to this question. For these observations the next split is governed by whether LoyalCH is less than 0.261626. There are 161 observations that answer Yes to this question. For these observations the next split is governed by whether LoyalCH is less than 0.0356415. There are 60 observations that answer Yes to this question and 100% of these observations are MM purchases. This is the terminal node number 8.
+
+###9.d
+```{r 9-d}
+plot(tree.purchase)
+text(tree.purchase, pretty = 0)
+```
+
+Customers that are loyal to CH (LoyalCH greater than 0.5036) show a strong propensity to buy CH. They are not swayed even if MM is priced \$0.145 less than CH. The only driver for a LoyalCH customer to shift to MM is when MM is priced atleast \$0.145 less than CH and it represents an almost 50% discount to the price of CH.
+
+Customers who have very low loyalty to CH (less than 0.261626) always purchase MM. In other words, they are loyal MM customers. 
+
+Customers that are somewhat loyal to CH (greater than 0.261626 & less than 0.5036) can be incentivized to buy CH as long as it is atleast \$0.05 cheaper than MM.
+
+Clearly CH is the more preferred brand amongst the training set observations.
+
+###9.e
+```{r 9-e}
+yhat.tree = predict(tree.purchase, newdata = OJ[-train,], type = "class")
+table(yhat.tree, reference = OJ[-train, "Purchase"])
+
+1-(155+66)/(1070-800)
+```
+
+The test error rate is 18.15%
+
+###9.f
+```{r 9-f}
+cv.purchase = cv.tree(tree.purchase, FUN = prune.misclass)
+cv.purchase
+```
+
+###9.g
+```{r 9-g}
+data.frame(tree.size=cv.purchase$size, cv.classification.error.rate=cv.purchase$dev/length(train)) %>%
+  ggplot(aes(tree.size, cv.classification.error.rate))+ geom_line()+ geom_point()
+```
+
+###9.h
+Two trees, one with 7 terminal nodes and the other with 8 terminal nodes, produce the lowest classification error rates. We choose the simpler tree i.e. the one with 7 terminal nodes.
+
+###9.i
+```{r 9-i}
+prune.purchase = prune.tree(tree.purchase, best = 7)
+prune.purchase
+
+plot(prune.purchase)
+text(prune.purchase, pretty = 0)
+```
+
+###9.j
+```{r 9-j}
+unpruned.tree.error = (as.integer(tree.purchase$y) != as.integer(OJ[train,"Purchase"])) %>% mean()
+unpruned.tree.error
+
+pruned.tree.error = (as.integer(prune.purchase$y) != as.integer(OJ[train,"Purchase"])) %>% mean()
+pruned.tree.error
+```
+
+The training error rates for both the pruned and unpruned trees is the same and is 0
+
+###9.k
+```{r 9-k}
+yhat.unpruned = predict(tree.purchase, newdata = OJ[-train,], type = "class")
+yhat.pruned = predict(prune.purchase, newdata = OJ[-train,], type = "class")
+
+unpruned.tree.error = (as.integer(yhat.unpruned) != as.integer(OJ[-train,"Purchase"])) %>% mean()
+unpruned.tree.error
+
+pruned.tree.error = (as.integer(yhat.pruned) != as.integer(OJ[-train,"Purchase"])) %>% mean()
+pruned.tree.error
+```
+
+The test error rate for the pruned tree is higher than that for the unpruned tree.
