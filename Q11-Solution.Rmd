@@ -1,0 +1,70 @@
+---
+title: "Q11-Solution"
+author: "Sanjeev Gadre"
+date: "December 02, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(gbm)
+library(ISLR)
+library(ggplot2)
+library(class)
+
+data(Caravan)
+```
+
+###11.a
+```{r 11-a}
+train = 1:1000
+```
+
+###11.b
+```{r 11-b}
+set.seed(1970)
+Caravan = Caravan %>% mutate(Purchase = ifelse(Purchase == "No", 0,1))
+boost.Caravan = gbm(Purchase~., data = Caravan[train,], distribution = "bernoulli",
+                    n.trees = 1000, shrinkage = 0.01, interaction.depth = 4)
+boost.Caravan
+summary(boost.Caravan)
+```
+
+"PPERSAUT" has the most import in predicting "Purchase". Overall only 57 of the 85 predictors have a non-zero influence.
+
+###11.c
+```{r 11-c}
+set.seed(1970)
+pred.boost = predict(boost.Caravan, newdata = Caravan[-train,], n.trees = 1000, type = "response")
+yhat.boost = ifelse(pred.boost<=0.2, 0, 1)
+conf.matrix.boost = table(Prediction = yhat.boost, Actual = Caravan[-train,"Purchase"])
+conf.matrix.boost
+x.boost = conf.matrix.boost[2,2]/(conf.matrix.boost[2,1]+conf.matrix.boost[2,2])
+x.boost
+
+standardized.X = scale(Caravan[,-86]) #Standardizing the predictors
+train.X = standardized.X[train,]; test.X = standardized.X[-train,]
+train.Y = as.factor(Caravan$Purchase[train]); test.Y = as.factor(Caravan$Purchase[-train])
+
+#5 nearest neighbours are chosen to make the prediction. 5 is chosen as it was shown to provide the best results in an earlier exercise.
+knn.Caravan = knn(train = train.X, test = test.X, cl = train.Y, k = 5)
+conf.matrix.knn = table(Prediction = knn.Caravan, Actual = test.Y)
+conf.matrix.knn
+x.knn = conf.matrix.knn[2,2]/(conf.matrix.knn[2,1]+conf.matrix.knn[2,2])
+x.knn
+
+glm.Caravan = glm(as.factor(Purchase)~., data = Caravan, subset = train, family = "binomial")
+pred.glm = predict(glm.Caravan, newdata = Caravan[-train,], type = "response")
+yhat.glm = ifelse(pred.glm <= 0.2, 0, 1)
+conf.matrix.glm = table(Prediction = yhat.glm, Actual = Caravan[-train,"Purchase"])
+conf.matrix.glm
+x.glm = conf.matrix.glm[2,2]/(conf.matrix.glm[2,1]+conf.matrix.glm[2,2])
+x.glm
+```
+
+For Boosting Classification Model, 13.27% of people predicted to make purchase do in fact make one.
+For KNN Classification Model, 27.02% of people predicted to make purchase do in fact make one.
+Fot Logistic Regression Model, 14.22% of people predicted to make purchase do in fact make one.
+
+The Boosting Classification Model does the worst of all 3 models.
