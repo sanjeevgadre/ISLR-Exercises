@@ -6,3 +6,6 @@ When the function cor() is applied to a matrix, it assumes that the vectors for 
 
 ###Question 10.f
 Good example of how PCA can help reduce the size of the data matrix that one uses for analysis.
+
+###Question 11.c
+Clever way to reorder the rows of a dataframe based on the values in a particular column.
