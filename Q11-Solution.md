@@ -92,16 +92,19 @@ the second 20 samples are from the diseased group. For each of these
 groups, for each of the 1000 genes we calculate the mean. This will give
 us a 1000x2 matrix.
 
-For this 1000x2 matrix, we find the pairwise distance between all 1000
-genes and then identify the pair with the maximum distance. That pair
-represent the gene pair that differs most across the two groups.
+For this 1000x2 matrix, we find for each gene the square of the distance
+between mean for the healthy group and the corresponding mean for the
+diseased group. Arranging the genes in descending order of this squared
+distance would give an ordered list of genes that differ the most
+between the healthy group and diseased group.
 
     good.group.means = rowMeans(dat[,1:20]); bad.group.means = rowMeans(dat[,21:40])
-    newdat = cbind(good.group.means, bad.group.means)
-    dd = dist(newdat)^2
-    dd = as.matrix(dd)
-    which(dd == max(dd), arr.ind = TRUE)
+    newdat = cbind(squared.dist = (good.group.means-bad.group.means)^2, gene.number = 1:1000)
+    newdat = newdat[order(-newdat[,1]),]
+    print("The top 10 genes that vary most across the healthy group and diseased group are")
 
-    ##     row col
-    ## 689 689 551
-    ## 551 551 689
+    ## [1] "The top 10 genes that vary most across the healthy group and diseased group are"
+
+    head(newdat[,2], 10)
+
+    ##  [1] 600 584 549 540 502 568 582 565 562 554
