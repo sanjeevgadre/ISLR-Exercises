@@ -1,0 +1,59 @@
+---
+title: "Q11-Solution"
+author: "Sanjeev Gadre"
+date: "December 16, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+###11.a
+```{r 11-a}
+dat = read.csv("./Q11-Data_files/Ch10Ex11.csv", header = FALSE)
+```
+
+###11.b
+```{r 11-b}
+set.seed(1970)
+
+#Here the number of observations is 40 (no. of samples) and number of features is 1000 (gene expressions)
+
+plot(hclust(as.dist(1-cor(dat)), method = "complete"), main = "Dendogram using Complete Linkage", 
+     xlab = "", sub = "", cex = 0.5)
+plot(hclust(as.dist(1-cor(dat)), method = "average"), main = "Dendogram using Average Linkage", 
+     xlab = "", sub = "", cex = 0.5)
+plot(hclust(as.dist(1-cor(dat)), method = "single"), main = "Dendogram using Single Linkage", 
+     xlab = "", sub = "", cex = 0.5)
+```
+
+The results don't depend on the type of linkage used. The sample separates into two "groups" at different heights depending on the linkage type used. Technically, there are more than two groups formed: most of the samples from the diseased group do indeed fall into one group but most of the samples from the healthy group fall into a group by itself.
+
+###11.b.contd
+```{r 11-b-contd}
+print("Complete Linkage Groups")
+cutree(hclust(as.dist(1-cor(dat)), method = "complete"), h = 0.85)
+print("====")
+print("Average Linkage Groups")
+cutree(hclust(as.dist(1-cor(dat)), method = "average"), h = 0.85)
+print("====")
+print("Single Linkage Groups")
+cutree(hclust(as.dist(1-cor(dat)), method = "single"), h = 0.85)
+```
+
+
+###11.c
+TO determine which genes differ the most across the two groups, we will rely on the distance between the genes (rather the distance between the expressed value of the genes over the data set).
+
+We use the fact that the first 20 samples are from the healthy group and the second 20 samples are from the diseased group. For each of these groups, for each of the 1000 genes we calculate the mean. This will give us a 1000x2 matrix. 
+
+For this 1000x2 matrix, we find the pairwise distance between all 1000 genes and then identify the pair with the maximum distance. That pair represent the gene pair that differs most across the two groups.
+```{r 11-c}
+good.group.means = rowMeans(dat[,1:20]); bad.group.means = rowMeans(dat[,21:40])
+newdat = cbind(good.group.means, bad.group.means)
+dd = dist(newdat)^2
+dd = as.matrix(dd)
+which(dd == max(dd), arr.ind = TRUE)
+```
