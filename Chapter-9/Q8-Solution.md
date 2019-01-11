@@ -1,7 +1,6 @@
     knitr::opts_chunk$set(echo = TRUE)
     library(e1071)
     library(ISLR)
-    library(dplyr)
     attach(OJ)
 
 ### 8.a
