@@ -1,0 +1,100 @@
+---
+title: "Q10-Solution"
+author: "Sanjeev Gadre"
+date: "December 01, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(gbm)
+library(ISLR)
+library(ggplot2)
+library(glmnet)
+library(randomForest)
+
+data(Hitters)
+```
+
+###10.a
+```{r 10-a}
+na.ind = is.na(Hitters[,"Salary"])
+Hitters = Hitters[!na.ind,]
+Hitters = mutate(Hitters, Salary = log(Salary))
+```
+
+###10.b
+```{r 10-b}
+train = 1:200
+```
+
+###10.c
+```{r 10-c}
+lambda.range = seq(0.01,1,length.out = 25)
+error.pred.boost = rep(0, length(lambda.range))
+
+foo = function(x){
+  boost.salary = gbm(Salary~., data = Hitters[train,], distribution = "gaussian",
+                     shrinkage = x, n.trees = 1000)
+  error.mean = boost.salary$train.error %>% mean()
+}
+
+set.seed(1970)
+error.pred.boost = sapply(lambda.range, foo)
+data.frame(lambda = lambda.range, MSE.error.train = error.pred.boost) %>% 
+  ggplot(aes(lambda, MSE.error.train))+ geom_line(col = "Red")+ geom_point(col = "black")
+```
+
+###10.d
+```{r 10-d}
+foo.1 = function(x){
+  boost.salary = gbm(Salary~., data = Hitters[train,], distribution = "gaussian",
+                     shrinkage = x, n.trees = 1000)
+  yhat.boost = predict(boost.salary, newdata = Hitters[-train,], n.trees = 1000)
+  error.mean = (yhat.boost - Hitters[-train,"Salary"])^2 %>% mean()
+}
+
+set.seed(1970)
+error.pred.boost = sapply(lambda.range, foo.1)
+
+data.frame(lambda = lambda.range, MSE.test.error = error.pred.boost) %>%
+  ggplot(aes(lambda, MSE.test.error))+ geom_line(col = "Blue")+ geom_point(col = "Black")
+
+```
+
+###10.e
+```{r 10-e}
+lm.salary = lm(Salary~., data = Hitters, subset = train)
+yhat.lm = predict(lm.salary, newdata = Hitters[-train,])
+error.pred.lm = (yhat.lm - Hitters[-train,"Salary"])^2 %>% mean()
+
+x.train = model.matrix(Salary~., data = Hitters[train,])
+x.test = model.matrix(Salary~., data = Hitters[-train,])
+lasso.salary = glmnet(x.train, Hitters$Salary[train], alpha = 1)
+yhat.lasso = predict.glmnet(lasso.salary, newx = x.test, type = "response")
+error.pred.lasso = (yhat.lasso-Hitters$Salary[-train])^2 %>% mean()
+data.frame(Boosted.Tree.Regression = min(error.pred.boost), Lasso.Regression = error.pred.lasso, OLS.Regression = error.pred.lm)
+```
+
+The Boosted Tree Regression significantly outperforms (~2x) both Lasso Regression and OLS REgression.
+
+###10.f
+```{r 10-f}
+boosted.best.lambda = lambda.range[which.min(error.pred.boost)]
+boosted.salary = gbm(Salary~., data = Hitters, distribution = "gaussian", shrinkage = boosted.best.lambda)
+summary(boosted.salary)
+```
+
+The most important predictor of Salary are CAtBat. The second most important predictors are CHits and CRuns where as CRBI and CWalks also have an impact on the value of Salary.
+
+###10.g
+```{r 10-g}
+set.seed(1970)
+bagged.salary = randomForest(Salary~., data = Hitters, subset = train, mtry = ncol(Hitters)-1)
+yhat.bagged = predict(bagged.salary, newdata = Hitters[-train,])
+error.pred.bagged = (yhat.bagged-Hitters$Salary[-train])^2 %>% mean()
+error.pred.bagged
+```
+
+The test MSE for a bagged tree regression is 0.2319, slightly lower than test MSE for boosted tree regression.
