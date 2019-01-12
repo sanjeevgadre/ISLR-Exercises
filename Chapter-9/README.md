@@ -1,6 +1,7 @@
 # ISLR-Exercises
 
 ##Chapter 9 - Support Vector Machines
+
 ####Question 4 
 1. A clever approach to adding all diagonal (or off-diagonal) elements of a matrix. 
 
