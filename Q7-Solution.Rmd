@@ -1,0 +1,57 @@
+---
+title: "Q7-Solution"
+author: "Sanjeev Gadre"
+date: "September 12, 2018"
+output: md_document
+---
+
+```{r setup, echo=TRUE, message=FALSE}
+library(ISLR)
+library(tidyverse)
+data("Weekly")
+```
+
+##7.a
+```{r 7-a, echo=TRUE}
+glm_fit_7a = glm(Direction~Lag1+Lag2, data=Weekly, family=binomial)
+summary(glm_fit_7a)
+```
+
+
+##7.b&c
+```{r 7-b&c, echo=TRUE}
+lOO_number=1
+
+glm_fit_7b = glm(Direction~Lag1+Lag2, data=Weekly, family=binomial, subset=-lOO_number)
+
+glm_prob_7b = predict(glm_fit_7b, newdata=Weekly[lOO_number,], type="response")
+glm_pred_7b = ifelse(glm_prob_7b>0.5,"Up","Down")
+
+error_7b = ifelse(glm_pred_7b!=Weekly[lOO_number,]$Direction, 1, 0)
+error_7b
+```
+
+The first observation is incorrectly predicted.
+
+##7.d
+```{r 7-d, echo=TRUE}
+set.seed(1)
+
+pred_error = function(x){
+  glm_fit_7d = glm(Direction~Lag1+Lag2, data=Weekly, family=binomial, subset=-x)
+
+  glm_prob_7d = predict(glm_fit_7d, newdata=Weekly[x,], type="response")
+  glm_pred_7d = ifelse(glm_prob_7d>0.5,"Up","Down")
+
+  error = ifelse(glm_pred_7d!=Weekly[x,]$Direction, 1, 0)
+  return(error)
+}
+
+error_7d = sapply(1:nrow(Weekly), pred_error)
+
+LOOCV_error_7d = mean(error_7d)
+LOOCV_error_7d
+```
+
+##7.e
+The LOOCV procedure in 7.d above reported an LOOCV error rate of 45% i.e the fit is likely to correctly predict 55% of test data.

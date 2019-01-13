@@ -1,0 +1,72 @@
+---
+title: "Q8-Solution"
+author: "Sanjeev Gadre"
+date: "September 13, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(boot)
+```
+
+##8.a
+```{r 8-a}
+set.seed(1)
+y=rnorm(100)
+x=rnorm(100)
+y=x-2*x^2+rnorm(100)
+```
+
+In the example above n=100 and p=2
+
+##8.b
+```{r 8-b}
+data.frame(X=x, Y=y) %>% ggplot(aes(X,Y))+geom_point(colour="Red")
+```
+
+The distribution looks like an inverted parabola, centred around 0 and values ranging from {-2,2}
+
+##8.c
+
+```{r 8-c}
+dat = data.frame(X=x, Y=y)
+
+cv.error = function(seed,power){
+  set.seed(seed)
+  glm.fit = glm(Y~poly(X,power), data=dat)
+  cv.err = cv.glm(dat, glm.fit)
+  return(cv.err$delta[1])
+}
+
+cv.error.8c = mapply(cv.error, seed=100, power=1:4, SIMPLIFY=TRUE)
+
+data.frame(Power.of.X=1:4, LOOCV.MSE=cv.error.8c)
+```
+
+##8.d
+```{r 8-d}
+cv.error.8d = mapply(cv.error, seed=10, power=1:4, SIMPLIFY=TRUE)
+
+data.frame(Power.of.X=1:4, LOOCV.MSE=cv.error.8d)
+
+```
+
+The results for 8-d are the same as 8-c. This is explainable as both 8-c and 8-d use the LOOCV approach to determine the test error and therefore perform the exact same procedure on the entire data set. Setting different seeds has not impact as in both cases the iterations include the exact same sets of training data and test data.
+
+##8.e
+The model that uses both linear and quadratic values of X has the lowest LOOCV error. This is to be expected as the true model uses the same predictors. Including increasingly higher powers of X does not meaningfully improve the LOOCV error (actually, marginally increases the LOOCV error) as it starts to suffer from over fitting.
+
+##8.f
+```{r 8.f}
+coeff.p.values = function(degree){
+  p.values = dat %>% glm(Y~poly(X,degree),data=.) %>% summary() %>% .$coefficients %>% .[,4]
+  return(p.values)
+}
+
+coeff.p.values.8f = sapply(1:4,coeff.p.values)
+coeff.p.values.8f
+```
+
+The results do indeed agree with 8.c above. The p-values for the third and fourth order terms of X are high and therefore indicate that these terms are not good predictors of the value of Y

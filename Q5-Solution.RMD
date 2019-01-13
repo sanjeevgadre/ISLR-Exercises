@@ -1,0 +1,84 @@
+---
+title: "Question 5 - Solutions"
+author: "Sanjeev Gadre"
+date: "September 7, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Setting up the environment
+```{r environment, message=FALSE, echo=TRUE}
+library(tidyverse)
+library(boot)
+library(ISLR)
+```
+
+##5.a
+```{r 5-a, echo=TRUE}
+data("Default")
+glm_fit_5a = glm(default~income+balance, data=Default, family=binomial)
+summary(glm_fit_5a)
+```
+
+##5.b
+```{r 5-b, echo=TRUE}
+
+validation_set_error = function(x){
+  set.seed(x)
+  
+  training_data = sample(nrow(Default), round(nrow(Default)/2), replace=FALSE)
+  training_set = Default[training_data,]
+  validation_set = Default[-training_data,]
+  
+  glm_fit_5 = glm(default~income+balance, data=training_set, family=binomial)
+  glm_probs_5 = predict(glm_fit_5, newdata=validation_set, type="response")
+  glm_pred_5 = rep("No", nrow(validation_set))
+  glm_pred_5[glm_probs_5>0.5] = "Yes"
+
+  test_error = mean(glm_pred_5 != validation_set$default)
+  return(test_error)
+}
+
+test_errror_5b = validation_set_error(1)
+```
+
+##5.c
+```{r 5-c, echo=TRUE}
+test_error_5c = sapply(1:100, validation_set_error)
+dfx_5c = as.data.frame(test_error_5c)
+
+mean_error_5c = mean(dfx_5c$test_error_5c)
+
+dfx_5c %>% ggplot(aes(test_error_5c))+geom_histogram(binwidth=0.001)
+```
+
+Every random split of the data set into test and validation sets gives a slightly differing value of the validation set error.
+
+##5.d
+```{r 5-d, echo=TRUE}
+validation_set_error_5d = function(x){
+  set.seed(x)
+  
+  training_data = sample(nrow(Default), round(nrow(Default)/2), replace=FALSE)
+  training_set = Default[training_data,]
+  validation_set = Default[-training_data,]
+  
+  glm_fit_5d = glm(default~income+balance+student, data=training_set, family=binomial)
+  glm_probs_5d = predict(glm_fit_5d, newdata=validation_set, type="response")
+  glm_pred_5d = rep("No", nrow(validation_set))
+  glm_pred_5d[glm_probs_5d>0.5] = "Yes"
+
+  test_error = mean(glm_pred_5d != validation_set$default)
+  return(test_error)
+}
+
+test_error_5d = sapply(1:100,validation_set_error_5d)
+
+dfx_5d = as.data.frame(test_error_5d)
+mean_error_5d = mean(dfx_5d$test_error_5d)
+```
+
+The inclusion of the dummy variable does not lead to a reduction in the test error rate.

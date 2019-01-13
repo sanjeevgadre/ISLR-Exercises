@@ -1,0 +1,36 @@
+---
+title: "Q6-Solutions"
+author: "Sanjeev Gadre"
+date: "September 11, 2018"
+output: md_document
+---
+
+```{r environment, echo=TRUE, message=FALSE}
+library(ISLR)
+library(tidyverse)
+library(boot)
+
+data("Default")
+```
+
+##6.a
+```{r 6-a, echo=TRUE}
+glm_fit_6a = glm(default~income+balance, data=Default, family=binomial)
+std_errors_6a = summary(glm_fit_6a)$coefficients[2:3,2]
+std_errors_6a
+```
+
+##6.b&c
+```{r 6-b&c, echo=TRUE}
+set.seed(1)
+boot.fn = function(data,index){
+  glm_fit = glm(default~income+balance, data=data, family=binomial, subset=index)
+  coeffs = summary(glm_fit)$coefficients[2:3,1]
+  return(coeffs)
+}
+
+boot(Default,boot.fn, R=1000)
+```
+
+##6.d
+The glm() function returns standard errors for the two coefficients "income" and "balance" as 4.985exp(-6) and 2.274exp(-4). The boot() function returns comparatively smmaler standard error values for the two coefficients - 4.583exp(-06) and 2.268exp(-4).
