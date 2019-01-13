@@ -1,0 +1,53 @@
+---
+title: "Q9-Solution"
+author: "Sanjeev Gadre"
+date: "December 14, 2018"
+output: md_document
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+###9.a
+```{r 9-a}
+hc.out = hclust(dist(USArrests))
+```
+
+###9.b
+```{r 9-b}
+hc.clusters = cutree(hc.out, k = 3)
+states = row.names(USArrests)
+for (i in 1:3){
+  print(paste("The states in cluster", i, "are", sep = " "))
+  print(states[hc.clusters == i])
+}
+plot(hc.out, main = "Hierarchical Clustering", xlab = "", sub = "")
+table(hc.clusters)
+```
+
+###9.c
+```{r 9-c}
+hc.out.scaled = hclust(dist(scale(USArrests)))
+hc.clusters.scaled = cutree(hc.out.scaled, k=3)
+for (i in 1:3){
+  print(paste("The states in cluster", i, "are", sep = " "))
+  print(states[hc.clusters.scaled == i])
+}
+plot(hc.out.scaled, main = "Hierarchical Clustering with Scaled Factors", xlab = "", sub = "")
+table(hc.clusters.scaled)
+```
+
+Scaling the features significantly alters the cluster sizes and memberships. When features are not scaled we get three clusters with near equal sizes, where as when they are scaled we get two clusters are near equal sizes and the third cluster with much bigger size. 
+
+###9.d
+```{r 9-d}
+print("Mean values for individual features")
+colMeans(USArrests)
+print("Standard deviation for individual features")
+apply(USArrests, 2, sd)
+```
+
+As the two tables above show the 4 features have very different means (differing by as much as 10x) and wide variances. In absence of scaling, the features with larger values are likely to dominate the calculation of the Euclidean distance between 2 observations and therefore dominate the decision whether the pair is similar. This is undesirable as we want all the 4 features to have a fair weight in the decision of whether a pair is similar. Lack of scaling is likely to create clusters that may misguide the decision.
+
