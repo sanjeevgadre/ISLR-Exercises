@@ -1,0 +1,151 @@
+---
+title: "Chap3: Exercises - Q13"
+author: "Sanjeev Gadre"
+date: "August 1, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Including the necessary libraries
+
+```{r including-libraries, message=FALSE, echo=TRUE}
+library(ISLR)
+library(car)
+library(tidyverse)
+```
+
+## Problem 13
+
+#13.a
+```{r, echo=TRUE}
+set.seed(1)
+x = rnorm(100)
+```
+
+#13.b
+```{r, echo=TRUE}
+eps= rnorm(100,0,sqrt(0.25))
+```
+
+#13.c
+```{r}
+y = -1+0.5*x+eps
+```
+The length of vector y is 100 and the values of beta_0 and beta_1 in this linear model are respectively -1 and 0.5.
+
+#13.d
+```{r}
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+```
+
+The scatter plot seems to indicate that y increases monotonically with x, something we expect because of the model definition. However the noise term (eps) means that y's are not on a straight line but scattered about.
+
+#13.e
+```{r}
+linear_fit_13e = lm(y~x)
+summary_13e = summary(linear_fit_13e)
+beta_hat_0_13e = summary_13e$coefficients[1]
+beta_hat_1_13e = summary_13e$coefficients[2]
+```
+
+The beta_hat_0 value of
+```{r, echo=FALSE}
+print(beta_hat_0_13e, digits=3)
+```
+
+is very close to beta_0 = -1 and similarly the beta_hat_1 value of 
+```{r, echo=FALSE}
+print(beta_hat_1_13e, digits=3)
+```
+
+is very close to beta_1 = 0.5. The differences are attributable to the noise term eps.
+
+#13.f
+```{r}
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_hat_1_13e, intercept=beta_hat_0_13e, col="RED", show.legend=TRUE)
+```
+
+#13.g
+```{r}
+linear_fit_13g = lm(y~x+I(x^2))
+summary_13g = summary(linear_fit_13g)
+R_sq_13g = summary_13g$r.squared
+
+R_sq_13e = summary_13e$r.squared
+```
+
+The R-squared fit for fit with only linear term 
+```{r, echo=FALSE} 
+print(R_sq_13e) 
+```
+
+The R-squared fit for fit with linear and quadratic term 
+```{r, echo=FALSE} 
+print(R_sq_13g) 
+```
+
+The R-squared value with the quadratic term is slightly better than the R-squared value with only a linear term. This is a classic example of "over-fitting". The noise term eps means that y does not have a strict linear relationship with x and therefore the quadratic term helps create a more "wiggly" line that better fits the training data. However it is fully expected that with test data, the linear-term-only model would perform much better.
+
+#13.h
+```{r}
+eps_less = rnorm(100,0,sqrt(0.025))
+y = -1+0.5*x+eps_less
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+
+linear_fit_13h = lm(y~x)
+summary_13h = summary(linear_fit_13h)
+beta_hat_0_13h = summary_13h$coefficients[1]
+beta_hat_1_13h = summary_13h$coefficients[2]
+R_sq_13h = summary_13h$r.squared
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_hat_1_13h, intercept=beta_hat_0_13h, col="Red", show.legend=TRUE)
+```
+
+The summary of the linear fit with "lower" noise is below:
+```{r, echo=FALSE}
+summary_13h
+```
+
+As the summary indicates the beta-hat-0 and beta-hat-1 are comparable to those from the earlier fit, but the R-squared value has increased significantly, indicating that this fit is much closer to the "true" fit. This "better" fit is attributable to the lesser noise term.
+```{r echo=FALSE}
+print(R_sq_13h)
+```
+
+#13.i
+```{r}
+eps_more = rnorm(100,0,sqrt(0.5))
+y = -1+0.5*x+eps_more
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()
+
+linear_fit_13i = lm(y~x)
+summary_13i = summary(linear_fit_13i)
+beta_hat_0_13i = summary_13i$coefficients[1]
+beta_hat_1_13i = summary_13i$coefficients[2]
+R_sq_13i = summary_13i$r.squared
+
+data.frame(y=y, x=x) %>% ggplot(aes(x,y))+ geom_point()+ geom_abline(slope=beta_hat_1_13i, intercept=beta_hat_0_13i, col="Red", show.legend=TRUE)
+```
+
+The summary of the linear fit with "higher" noise is below:
+```{r, echo=FALSE}
+summary_13i
+```
+
+As the summary indicates the beta-hat-0 and beta-hat-1 are again comparable to those from the earlier two fits, but are furtheset of the three from the coefficients of the true fit, beta-0 and beta-1, and the fitted line has clearly lower slope. The R-squared value has decreased significantly from the less noisy dataset, indicating that this fit is poorer to the "true" fit. This "poor" fit is attributable to the larger noise term. The R-squared value for the noiser fit is:
+```{r echo=FALSE}
+print(R_sq_13i)
+```
+
+#13.j
+The 95% confidence intervals for coefficients the three fits: original data set, the noiser dataset and less noisy dataset are shown in order below
+```{r, echo=FALSE}
+print("Original Dataset"); confint(linear_fit_13e)
+print("Noiser Dataset"); confint(linear_fit_13i)
+print("Less Noisy Dataset"); confint(linear_fit_13h)
+```
+
+Clearly, noisier the dataset wider are the confidence intervals for the coefficient estimates.

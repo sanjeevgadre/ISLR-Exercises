@@ -1,0 +1,179 @@
+---
+title: "Chap3: Exercises - Q14"
+author: "Sanjeev Gadre"
+date: "August 1, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Including the necessary libraries
+
+```{r including-libraries, message=FALSE, echo=TRUE}
+library(ISLR)
+library(car)
+library(tidyverse)
+```
+
+## Problem 14
+
+#14.a
+```{r, echo=TRUE}
+set.seed(1)
+x1 = runif(100)
+x2 = 0.5*x1+rnorm(100)/10
+y = 2+2*x1+0.3*x2+rnorm(100)
+```
+
+This linear model is of the form Y= beta-0 + (beta-1)X1 + (beta_2)X2 + std. normal error and the regression coefficeints are beta-0 = 2, beta-1 = 2 and beta-2 = 0.3.
+
+#14.b
+```{r, echo=FALSE}
+plot(x1,x2)
+abline(a=0, b=0.5, col= "RED")
+```
+
+As the plot above shows, x2 is linearly related to the x1. This is to be expected as x2 is defined as linear function of x1
+
+#14.c
+```{r}
+linear_fit_1 = lm(y~x1+x2)
+summary_1 = summary(linear_fit_1)
+summary_1
+```
+
+The summary results indicate:
+*x2 with a low p-value is not a significant predictor of y*
+```{r, echo=FALSE} 
+print(summary_1$coefficients[3,4], digits=3)
+```
+
+*The R-squared value is quite low, indicating a poor fit*
+```{r, echo=FALSE} 
+print(summary_1$r.squared, digits=3)
+```
+
+
+
+The three coefficients beta-hat-0, beta-hat-1 and beta-hat-2, respectively are
+```{r, echo=FALSE}
+summary_1$coefficients[1,1]
+summary_1$coefficients[2,1]
+summary_1$coefficients[3,1]
+```
+
+Clearly only beta_hat_0 compares well with beta_0. beta_hat_1 is somewhat comparable to beta_1 but beta_hat_2 is way off beta_2
+
+However, the *F-statistic for the overall fit has a low p-value*, indicating that the hypothesis that x1 and/or x2 are predictors of y may not be dismissed, though from the summary results its clear that for **this fit** x2 is not a good predictor of y.
+
+#14.d
+```{r}
+linear_fit_2 = lm(y~x1)
+summary_2 = summary(linear_fit_2)
+summary_2
+```
+
+The summary results for y~x1 fit indicate:
+*x1 is a strong predictor of y because of its low p-value of*
+```{r, echo=FALSE}
+print(summary_2$coefficients[2,4], digits=3)
+```
+
+*The fit quality is not very good given a low R-squared value of*
+```{r, echo=FALSE}
+print(summary_2$r.squared)
+```
+
+Given the high F-statistic value with a corresponding low p-valeue we **cannot reject** the null hypothesis beta_1 = 0
+
+#14.e
+```{r}
+linear_fit_3 = lm(y~x2)
+summary_3 = summary(linear_fit_3)
+summary_3
+```
+
+The summary results for y~x2 fit indicate:
+*x2 is a strong predictor of y because of its low p-value of*
+```{r, echo=FALSE}
+print(summary_3$coefficients[2,4], digits=3)
+```
+
+*The fit quality is not very good given a low R-squared value of*
+```{r, echo=FALSE}
+print(summary_3$r.squared)
+```
+
+Given the high F-statistic value with a corresponding low p-valeue we **cannot reject** the null hypothesis beta_1 = 0
+
+#14.f
+The results in [c] and [e] do not contradict. When both x1 and x2 are used as predictors, because they are collinear, one of them becomes"insignificant" when describing a fit. However when each of them is used separately and indivudually, they do indeed provide a prediction of y. The collinearity between x1 and x2 is obvious when we compute their correlations as below:
+```{r}
+cor(x1,x2)
+```
+
+
+#14.g
+```{r 14-6-i}
+x1 = c(x1, 0.1)
+x2 = c(x2, 0.8)
+y = c(y, 6)
+
+linear_fit_1a = lm(y~x1+x2)
+summary_1a = summary(linear_fit_1a)
+summary_1a
+
+linear_fit_2a = lm(y~x1)
+summary_2a = summary(linear_fit_2a)
+summary_2a
+
+linear_fit_3a = lm(y~x2)
+summary_3a = summary(linear_fit_3a)
+summary_3a
+
+```
+
+Comparing the 3 models with respective updated models:
+```{r 14-g-ii, echo=FALSE}
+row_names = c("Original", "Updated")
+
+comparison_1 = data.frame(R_squared=c(summary_1$r.squared, summary_1a$r.squared), beta_0=c(summary_1$coefficients[1,1], summary_1a$coefficients[1,1]), beta_1=c(summary_1$coefficients[2,1], summary_1a$coefficients[2,1]), beta_2=c(summary_1$coefficients[3,1], summary_1a$coefficients[3,1]),row.names = row_names)
+print("y~x1+x2")
+comparison_1
+
+comparison_2 = data.frame(R_squared=c(summary_2$r.squared, summary_2a$r.squared), beta_0=c(summary_2$coefficients[1,1], summary_2a$coefficients[1,1]), beta_1=c(summary_2$coefficients[2,1], summary_2a$coefficients[2,1]),row.names = row_names)
+print("y~x1")
+comparison_2
+
+comparison_3 = data.frame(R_squared=c(summary_3$r.squared, summary_3a$r.squared), beta_0=c(summary_3$coefficients[1,1], summary_3a$coefficients[1,1]), beta_1=c(summary_3$coefficients[2,1], summary_3a$coefficients[2,1]),row.names = row_names)
+print("y~x2")
+comparison_3
+```
+
+The introduction of the mis-measured term has impact on all three models affecting the R-squared and the beta-0, beta-1 and beta-2 coefficient values. In effect the model definition changed in all three cases.
+
+To determine if the mis-measured term is an outlier we ascertain if the absolute value of the studentized residual of the term is greater than or equal to 3
+```{r 14-g-iii, echo=FALSE}
+print("for y~x1+x2")
+abs(rstudent(linear_fit_1a)[101])>=3
+print("for y~x1")
+abs(rstudent(linear_fit_2a)[101])>=3
+print("for y~x2")
+abs(rstudent(linear_fit_3a)[101])>=3
+```
+
+Clearly for the model y~x1, the mis measured term is an outlier
+
+To determine if the mismeasured term is a high leverage term, we ascertain how much the leverage statistic (hatvalue) for the term exeeds (p+1)/n where p is the number of predictors and n is number of observations
+```{r 14-g-iv, echo=FALSE}
+print("for y~x1+x2")
+hatvalues(linear_fit_1a)[101]/((2+1)/101)
+print("for y~x1")
+hatvalues(linear_fit_2a)[101]/((1+1)/101)
+print("for y~x2")
+hatvalues(linear_fit_3a)[101]/((1+1)/101)
+```
+For the y~x1+x2, the mismeasured term is clearly a high leverage term. It is also a possibly high leverage term for the y~x2 model.
+
+This further explains the changes in the 3 models by introduction of this mis measured term. From the comparison tables above the y~x1+x2 has clearly changed the most. y~x1 is affected because this term is an outlier term in this model and y~x2 is affected because this term is a relativel high leverage term.
