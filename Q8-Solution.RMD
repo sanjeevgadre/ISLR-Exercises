@@ -1,0 +1,130 @@
+---
+title: "Question 8 - Solutions"
+author: "Sanjeev Gadre"
+date: "October 19, 2018"
+output: md_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaps)
+library(glmnet)
+```
+
+```{r functions, include=FALSE, message=FALSE}
+
+```
+
+##8.a
+```{r 8-a}
+set.seed(1)
+x = rnorm(100)
+noise = rnorm(100)
+```
+
+##8.b 
+```{r 8-b}
+beta0 = -11
+beta1 = 0.74
+beta2 = 3.45
+beta3 = -2.69
+
+#real reality
+y = beta0 + beta1*x + beta2*x^2 + beta3*x^3 + noise
+
+#assumed reality
+df = cbind.data.frame(y=y, x1=x, x2=x^2, x3=x^3, x4=x^4, x5=x^5, x6=x^6, x7=x^7, x8=x^8, x9=x^9, x10=x^10)
+```
+
+##8.c.i Best Subset Selection
+```{r 8-c-i}
+regfit.full = regsubsets(y~., data = df, nvmax = 10)
+par(mfrow = c(1,3))
+plot(regfit.full, scale = "Cp")
+plot(regfit.full, scale = "adjr2")
+plot(regfit.full, scale = "bic")
+```
+
+Using either Cp or adjusted R-squared methods to estimate training error recommends that the best subset selection includes 4 predictors (x1,x2,x3 and x5), whereas the BIC method recommends that the best subset selection includes 3 predictors (x1,x2,x3). Clearly the BIC method, in this case, is better than the other 2 methods in determining the right predictors to include in the best subset model.
+
+###8.c.ii Best Subset Selection: Estimating the coefficients
+```{r 8-c-ii}
+coef(regfit.full, 4) #Coefficients of the 4 predictor best subsset
+coef(regfit.full, 3) #Coefficients of the 3 predictor best subsset
+```
+
+As expected the coefficients for the best subset with 3 predictors closely matches the coefficients of the original model.
+
+###8.d.i Forward and Backward Stepwise Selection - Best subset selection
+```{r 8-d-i}
+regfit.full.fwd = regsubsets(y~., data = df, nvmax = 10, method = "forward")
+par(mfrow = c(1,3))
+plot(regfit.full.fwd, scale = "Cp")
+plot(regfit.full.fwd, scale = "adjr2")
+plot(regfit.full.fwd, scale = "bic")
+
+regfit.full.bwd = regsubsets(y~., data = df, nvmax = 10, method = "backward")
+par(mfrow = c(1,3))
+plot(regfit.full.bwd, scale = "Cp")
+plot(regfit.full.bwd, scale = "adjr2")
+plot(regfit.full.bwd, scale = "bic")
+```
+
+The graphs above show that similar to the best subset selection model, both the forward and backward stepwise selection models when using either Cp or adjusted R-squared methods to estimate training error recommends that the best subset selection includes 4 predictors (for forward stepwise x1,x2,x3 and x5 and for backward stepwise x1,x2,x3 and x9), whereas the BIC method recommends that the best subset selection includes 3 predictors (x1,x2,x3). Clearly the BIC method, in this case, is better than the other 2 methods in determining the right predictors to include in the best subset model.
+
+###8.d.ii Forward and Backward Stepwise Selection - Estimating the Coefficients
+```{r 8-d-ii}
+
+coef(regfit.full.fwd, 4) #Coefficients of the 4 predictor best subsset - Forward Stepwise
+coef(regfit.full.fwd, 3) #Coefficients of the 3 predictor best subsset - Forward Stepwise
+
+coef(regfit.full.bwd, 4) #Coefficients of the 4 predictor best subsset - Backward Stepwise
+coef(regfit.full.bwd, 3) #Coefficients of the 3 predictor best subsset - Backward Stepwise
+```
+
+All three models provide the same predictors and same coefficients for the 3 predictor subset and the coefficients are pretty close to "reality".
+
+###8.e
+```{r 8-e}
+x.matrix = model.matrix(y~., data = df)[,-1]
+
+cv.lassofit.full = cv.glmnet(x.matrix, df$y, alpha = 1)
+best.lambda = cv.lassofit.full$lambda.min
+
+plot(cv.lassofit.full$lambda, cv.lassofit.full$cvm, xlab = "Lambda", ylab = "Cross Validation Error", pch = 20, type = "b")
+
+lassofit.full = glmnet(x.matrix, df$y, alpha = 1, lambda = best.lambda)
+coef.lassofit.full = coef(lassofit.full)[1:11,] #coerces the class to list for better display
+coef.lassofit.full
+```
+
+The Lasso model is able to set the coefficients for 3 of 7 predictors that do not influence the response variable (x5, x7, x9) to zero. The remaining 4 have coefficients that tend to zero.
+
+For the 3 predictors and the intercept value that influence the response variable, the Lasso coefficient estimates are pretty close to the actual model coefficients.
+
+###8.f
+```{r 8-f}
+beta7 = 5.26487
+y.8f = beta0 + beta7*x^7 + noise
+df.8f = data.frame(y.8f,x.matrix)
+
+regfit.full.8f = regsubsets(y.8f~., data = df.8f, nvmax = 10)
+par(mfrow = c(1,3))
+plot(regfit.full.8f, scale = "Cp")
+plot(regfit.full.8f, scale = "adjr2")
+plot(regfit.full.8f, scale = "bic")
+
+coef(regfit.full.8f,2) #Coefficients of the 2 predictor best subsset - Cp
+coef(regfit.full.8f,4) #Coefficients of the 4 predictor best subsset - Adj.R.Sq
+coef(regfit.full.8f,1) #Coefficients of the 1 predictor best subsset - BIC
+
+cv.lassofit.full.8f = cv.glmnet(x.matrix, y.8f, alpha = 1)
+best.lambda.8f = cv.lassofit.full.8f$lambda.min
+lassofit.full.8f = glmnet(x = x.matrix, y = df.8f$y.8f, alpha = 1, lambda = cv.lassofit.full.8f$lambda.min)
+
+coef(lassofit.full.8f)[1:11,] #Coefficients of the Lasso fit
+```
+
+In the case above (8.f), the best subset model produces differing results based on the measure used to estimate test error. Using Cp as a measure produces a model with 2 predictors(x2, x7), Adj-R.sq as a measure produces a model with 4 variables (x1, x2, x3, x7) and BIC as a measure produces a model with one variable (x7). Clearly the BIC is the best option in this case.
+
+For the model produced using Lasso method, the coefficeints for 8 predictor were driven to 0 but one predictor (x9) had a non zero coefficeint albeit a very small one. The Lasso model results are comparable to the one produced by Best subset method using BIC to estimate test error.
